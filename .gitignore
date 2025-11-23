@@ -24,6 +24,5 @@ Homestead.yaml
 Thumbs.db
 
 copilot-instructions
-rector.php
 pint.json
 phpstan.neon.dist
