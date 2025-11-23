@@ -26,3 +26,5 @@ Thumbs.db
 copilot-instructions
 pint.json
 phpstan.neon.dist
+
+docker-compose.yml
