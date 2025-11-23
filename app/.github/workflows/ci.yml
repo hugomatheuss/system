@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [ '**' ]
+  pull_request:
+    branches: [ '**' ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: [8.4]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v3
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, xml, ctype, json, pdo, curl
+          coverage: none
+
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --no-suggest
+
+      - name: Regenerate autoload optimized
+        run: composer dump-autoload -o
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Cache NPM
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Build frontend (optional)
+        if: fileExists('package.json')
+        run: npm run build --if-present
+
+      - name: Composer validate
+        run: composer validate --no-interaction || true
+
+      - name: Placeholder - run tests / linters
+        run: |
+          echo "Adicione aqui: phpunit, phpstan, pint, rector etc."
+          # php vendor/bin/phpunit --testsuite=unit
