@@ -50,7 +50,7 @@ abstract class BaseConsumer
         $callback = function ($msg) {
             try {
                 $data = json_decode($msg->body, true);
-                if (!is_array($data)) {
+                if (! is_array($data)) {
                     throw new \RuntimeException('Payload inválido no corpo da mensagem.');
                 }
 
