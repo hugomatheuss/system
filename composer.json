@@ -57,6 +57,8 @@
             "@php artisan config:clear --ansi",
             "@php artisan test"
         ],
+        "rector:dry": "vendor/bin/rector process --dry-run --config=rector.php",
+        "rector:apply": "vendor/bin/rector process --config=rector.php",
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"
