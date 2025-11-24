@@ -35,31 +35,47 @@ jobs:
       - name: Regenerate autoload optimized
         run: composer dump-autoload -o
 
-      - name: Setup Node
+      # Check whether Node is needed and whether lockfile exists
+      - name: Check for Node files
+        id: check_node
+        run: |
+          if [ -f package.json ]; then
+            echo "pkg=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "pkg=false" >> "$GITHUB_OUTPUT"
+          fi
+          if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
+            echo "lock=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "lock=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Node (if present)
+        if: ${{ steps.check_node.outputs.pkg == 'true' }}
         uses: actions/setup-node@v4
         with:
           node-version: 18
 
-      - name: Cache NPM
+      - name: Cache NPM (if present)
+        if: ${{ steps.check_node.outputs.pkg == 'true' }}
         uses: actions/cache@v4
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
 
-      - name: Install Node dependencies
-        run: npm ci
-
-      - name: Check for package.json
-        id: check_package
+      - name: Install Node dependencies (ci if lockfile, install otherwise)
+        if: ${{ steps.check_node.outputs.pkg == 'true' }}
         run: |
-          if [ -f package.json ]; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
+          if [ "${{ steps.check_node.outputs.lock }}" = 'true' ]; then
+            echo "Using npm ci (lockfile found)"
+            npm ci
           else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "No lockfile found, running npm install"
+            npm install
           fi
 
       - name: Build frontend (optional)
-        if: ${{ steps.check_package.outputs.exists == 'true' }}
+        if: ${{ steps.check_node.outputs.pkg == 'true' && steps.check_node.outputs.lock == 'true' }}
         run: npm run build --if-present
 
       - name: Composer validate
