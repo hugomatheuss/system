@@ -39,7 +39,7 @@ class RabbitMQPublisher
 
             $channel->basic_publish($message, $exchange, $routingKey);
         } finally {
-            $connection->close();
+            $channel->close();
         }
     }
 }
