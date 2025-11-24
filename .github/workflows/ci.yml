@@ -56,7 +56,44 @@ jobs:
       - name: Composer validate
         run: composer validate --no-interaction || true
 
-      - name: Placeholder - run tests / linters
+      # Run Pint (style checks)
+      - name: Run Pint (style checks)
         run: |
-          echo "Adicione aqui: phpunit, phpstan, pint, rector etc."
-          # php vendor/bin/phpunit --testsuite=unit
+          if [ -f vendor/bin/pint ]; then
+            vendor/bin/pint --test
+          else
+            echo "pint not installed" && exit 1
+          fi
+
+      # Run PHPStan (static analysis)
+      - name: Run PHPStan (static analysis)
+        run: |
+          if [ -f vendor/bin/phpstan ]; then
+            vendor/bin/phpstan analyse -c phpstan.neon --no-progress
+          else
+            echo "phpstan not installed" && exit 1
+          fi
+
+      # Run Rector in dry-run (via composer script)
+      - name: Run Rector (dry-run)
+        run: |
+          if composer help rector:dry >/dev/null 2>&1; then
+            composer rector:dry
+          elif [ -f vendor/bin/rector ]; then
+            vendor/bin/rector process --dry-run --config=rector.php
+          else
+            echo "rector not installed" && exit 1
+          fi
+
+      # Run PHPUnit (unit tests)
+      - name: Run PHPUnit (unit tests)
+        run: |
+          if [ -f vendor/bin/phpunit ]; then
+            vendor/bin/phpunit --testsuite=unit --colors=always
+          else
+            echo "phpunit not installed" && exit 1
+          fi
+
+      - name: Placeholder - additional checks
+        run: |
+          echo "Add any extra CI steps here (coverage, static analysis reports, artefact upload)"
