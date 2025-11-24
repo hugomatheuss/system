@@ -8,7 +8,8 @@
     "require": {
         "php": "^8.4",
         "laravel/framework": "^12.0",
-        "laravel/tinker": "^2.10.1"
+        "laravel/tinker": "^2.10.1",
+        "php-amqplib/php-amqplib": "^3.7"
     },
     "require-dev": {
         "driftingly/rector-laravel": "^2.1",
@@ -59,6 +60,10 @@
         ],
         "rector:dry": "vendor/bin/rector process --dry-run --config=rector.php",
         "rector:apply": "vendor/bin/rector process --config=rector.php",
+        "tools:pint": "vendor/bin/pint",
+        "tools:rector": "vendor/bin/rector --config=rector.php",
+        "tools:phpstan": "vendor/bin/phpstan analyse -c phpstan.neon --no-progress",
+        "run:tools": "composer tools:pint && composer tools:rector && composer tools:phpstan",
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"
