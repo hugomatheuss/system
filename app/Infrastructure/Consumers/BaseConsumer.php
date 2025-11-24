@@ -23,7 +23,7 @@ abstract class BaseConsumer
         $connection = RabbitMQConnection::getConnection();
         $channel = $connection->channel();
 
-        $channel->basic_qos(null, 1, null);
+        $channel->basic_qos(0, 1, false);
 
         $channel->exchange_declare(
             $this->exchange(),

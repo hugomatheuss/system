@@ -9,10 +9,11 @@ class HandleUserRegistered implements ShouldQueue
 {
     use Queueable;
 
+    /** @var array<string,mixed> */
     protected array $data;
 
     /**
-     * Create a new job instance.
+     * @param  array<string,mixed>  $data
      */
     public function __construct(array $data)
     {

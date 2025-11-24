@@ -3,11 +3,19 @@
 namespace App\Infrastructure\Publishers;
 
 use App\Infrastructure\Messaging\RabbitMQConnection;
+use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Exchange\AMQPExchangeType;
 use PhpAmqpLib\Message\AMQPMessage;
 
-class RabbitMQPublisher
+final class RabbitMQPublisher
 {
+    private AMQPStreamConnection $connection;
+
+    public function __construct(?AMQPStreamConnection $connection = null)
+    {
+        $this->connection = $connection ?? RabbitMQConnection::getConnection();
+    }
+
     /**
      * @param  array<string,mixed>  $payload
      *
@@ -15,8 +23,7 @@ class RabbitMQPublisher
      */
     public function publish(string $exchange, string $routingKey, array $payload): void
     {
-        $connection = RabbitMQConnection::getConnection();
-        $channel = $connection->channel();
+        $channel = $this->connection->channel();
 
         try {
             $channel->exchange_declare(
