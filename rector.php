@@ -1,81 +1,50 @@
 <?php
-declare(strict_types=1);
 
 use Rector\Config\RectorConfig;
+use Rector\Core\ValueObject\PhpVersion;
+use Rector\Set\ValueObject\SetList;
 
 return static function (RectorConfig $rectorConfig): void {
+    if (class_exists(PhpVersion::class)) {
+        // PHP 8.4 may not be present as a constant in Rector yet; usar 8.2 como fallback
+        if (defined(PhpVersion::class.'::PHP_84')) {
+            $rectorConfig->phpVersion(PhpVersion::PHP_84);
+        } elseif (defined(PhpVersion::class.'::PHP_83')) {
+            $rectorConfig->phpVersion(PhpVersion::PHP_83);
+        } else {
+            $rectorConfig->phpVersion(PhpVersion::PHP_82);
+        }
+    }
+
     $rectorConfig->paths([
-        __DIR__ . '/app',
-        __DIR__ . '/routes',
-        __DIR__ . '/database',
-        __DIR__ . '/tests',
-        __DIR__ . '/resources',
-        __DIR__ . '/config',
+        __DIR__.'/app',
+        __DIR__.'/routes',
     ]);
 
-    // Definir target PHP se a classe e constante existirem (tornar resiliente a versões do rector)
-    $phpVersionClass = '\\Rector\\Core\\ValueObject\\PhpVersion';
-    $preferredPhpConsts = ['PHP_84', 'PHP_83', 'PHP_82', 'PHP_81'];
-    if (class_exists($phpVersionClass)) {
-        foreach ($preferredPhpConsts as $const) {
-            $fullConst = $phpVersionClass . '::' . $const;
-            if (defined($fullConst)) {
-                // phpcs:ignore SlevomatCodingStandard.Classes.UnusedPrivateElements.UnusedProperty
-                $rectorConfig->phpVersion(constant($fullConst));
-                break;
-            }
+    $sets = [
+        SetList::CODE_QUALITY,
+        SetList::DEAD_CODE,
+    ];
+
+    // If driftingly/rector-laravel is installed, try to include its Laravel set(s)
+    if (class_exists('Drifting\\RectorLaravel\\Set\\LaravelSetList')) {
+        $laravelSet = 'Drifting\\RectorLaravel\\Set\\LaravelSetList';
+        // prefer an explicit Laravel 12 set if available
+        if (defined($laravelSet.'::LARAVEL_12')) {
+            $sets[] = $laravelSet.'::LARAVEL_12';
+        } elseif (defined($laravelSet.'::UPGRADE_TO_LARAVEL_12')) {
+            $sets[] = $laravelSet.'::UPGRADE_TO_LARAVEL_12';
+        } else {
+            // fallback to applying the whole set class if it provides constants used by ->sets
+            $sets[] = $laravelSet;
         }
     }
 
-    // Importar conjuntos de regras (sets) somente se estiverem disponíveis
-    $sets = [];
-    $setListClass = '\\Rector\\Set\\ValueObject\\SetList';
-    if (class_exists($setListClass)) {
-        foreach ([
-            'DEAD_CODE',
-            'CODE_QUALITY',
-            'TYPE_DECLARATION',
-            'EARLY_RETURN',
-            'PRIVATIZATION',
-        ] as $constName) {
-            $fullConst = $setListClass . '::' . $constName;
-            if (defined($fullConst)) {
-                $sets[] = constant($fullConst);
-            }
-        }
-    }
+    $rectorConfig->sets($sets);
 
-    // Regras específicas do Laravel (tentar importar o set do Laravel 12, 11 ou 10 se existir)
-    $laravelSetClass = '\\Rector\\Laravel\\Set\\LaravelSetList';
-    if (class_exists($laravelSetClass)) {
-        foreach (['LARAVEL_120', 'LARAVEL_110', 'LARAVEL_100'] as $constName) {
-            $fullConst = $laravelSetClass . '::' . $constName;
-            if (defined($fullConst)) {
-                $sets[] = constant($fullConst);
-                break;
-            }
-        }
-    }
-
-    // Importar cada set individualmente (a API do Rector espera string por chamada)
-    foreach ($sets as $set) {
-        $rectorConfig->import($set);
-    }
-
-    // Importação automática de nomes (use statements) e classes curtas
-    $rectorConfig->importNames(true);
-    $rectorConfig->importShortClasses(false);
-
-    // Habilita execução paralela quando possível
-    $rectorConfig->parallel();
-
-    // Ignorar pastas que não devem ser transformadas
     $rectorConfig->skip([
-        __DIR__ . '/storage',
-        __DIR__ . '/bootstrap/cache',
-        __DIR__ . '/vendor',
-        __DIR__ . '/node_modules',
-        __DIR__ . '/public',
-        __DIR__ . '/.git',
+        __DIR__.'/vendor',
+        __DIR__.'/storage',
+        __DIR__.'/node_modules',
     ]);
 };
