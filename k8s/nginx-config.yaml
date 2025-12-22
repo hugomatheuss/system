@@ -1,0 +1,40 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: eventflow-nginx-config
+data:
+  default.conf: |
+    server {
+      listen 80;
+      server_name _;
+      root /var/www/public;
+      index index.php index.html;
+
+      # Try files, fallback to front controller
+      location / {
+        try_files $uri $uri/ /index.php?$query_string;
+      }
+
+      # PHP-FPM via TCP on localhost (shared network namespace in Pod)
+      location ~ \.php$ {
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        fastcgi_pass 127.0.0.1:9000;
+        fastcgi_index index.php;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME /var/www/public$fastcgi_script_name;
+      }
+
+      # Static assets cache
+      location ~* \.(css|js|jpg|jpeg|png|gif|ico|svg)$ {
+        expires 30d;
+        add_header Cache-Control "public";
+      }
+
+      # Deny .env and other hidden files
+      location ~ /\. {
+        deny all;
+        access_log off;
+        log_not_found off;
+      }
+    }
+

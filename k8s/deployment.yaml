@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eventflow
+  labels:
+    app: eventflow
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: eventflow
+  template:
+    metadata:
+      labels:
+        app: eventflow
+    spec:
+      initContainers:
+        - name: copy-app
+          image: eventflow-ai:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - cp -r /var/www/* /shared-volume/ 2>/dev/null || true
+          volumeMounts:
+            - name: app-volume
+              mountPath: /shared-volume
+      containers:
+        - name: nginx
+          image: nginx:stable-alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/conf.d
+            - name: app-volume
+              mountPath: /var/www
+        - name: php-fpm
+          image: eventflow-ai:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: PHP_FPM_LISTEN
+              value: "9000"
+            - name: APP_ENV
+              value: "production"
+            - name: APP_DEBUG
+              value: "false"
+            - name: APP_KEY
+              value: "base64:uUH+8hY6T0N4AK30CpKcZn75nqrAsHZ/bkchQxHFvrU="
+            - name: APP_URL
+              value: "http://localhost"
+            - name: DB_CONNECTION
+              value: "sqlite"
+            - name: LOG_CHANNEL
+              value: "stack"
+            - name: CACHE_STORE
+              value: "file"
+            - name: SESSION_DRIVER
+              value: "file"
+            - name: QUEUE_CONNECTION
+              value: "sync"
+          ports:
+            - containerPort: 9000
+          volumeMounts:
+            - name: app-volume
+              mountPath: /var/www
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: eventflow-nginx-config
+            items:
+              - key: default.conf
+                path: default.conf
+        - name: app-volume
+          emptyDir: {}
