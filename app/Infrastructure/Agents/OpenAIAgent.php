@@ -4,20 +4,17 @@ namespace App\Infrastructure\Agents;
 
 use App\Domain\Ports\Agent;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Log;
 
 class OpenAIAgent implements Agent
 {
-    private Client $http;
+    private Client $client;
+    private string $model;
 
-    private string $apiKey;
-
-    private string $endpoint;
-
-    public function __construct(?Client $http = null)
+    public function __construct(string $apiKey, string $model = 'gpt-4o-mini')
     {
-        $this->http = $http ?? new Client;
-        $this->apiKey = config('services.openai.api_key');
-        $this->endpoint = config('services.openai.endpoint', 'https://api.openai.com/v1/chat/completions');
+        $this->client = \OpenAI::client($apiKey);
+        $this->model = $model;
     }
 
     /**
@@ -25,25 +22,51 @@ class OpenAIAgent implements Agent
      */
     public function analyze(string $content, array $metadata = []): array
     {
-        $payload = [
-            'model' => 'gpt-4o-mini',
-            'messages' => [
-                ['role' => 'user', 'content' => $content],
-            ],
-            'max_tokens' => 500,
-        ];
+        try {
+            $systemPrompt = $metadata['system_prompt'] ?? 'Você é um assistente inteligente que analisa mensagens e fornece insights úteis.';
+            $temperature = $metadata['temperature'] ?? 0.7;
+            $maxTokens = $metadata['max_tokens'] ?? 500;
 
-        $response = $this->http->post($this->endpoint, [
-            'headers' => [
-                'Authorization' => 'Bearer '.$this->apiKey,
-                'Content-Type' => 'application/json',
-            ],
-            'json' => $payload,
-            'timeout' => 30,
-        ]);
+            $response = $this->client->chat()->create([
+                'model' => $this->model,
+                'messages' => [
+                    [
+                        'role' => 'system',
+                        'content' => $systemPrompt,
+                    ],
+                    [
+                        'role' => 'user',
+                        'content' => $content,
+                    ],
+                ],
+                'temperature' => $temperature,
+                'max_tokens' => $maxTokens,
+            ]);
 
-        $body = json_decode((string) $response->getBody(), true);
+            return [
+                'success' => true,
+                'content' => $response->choices[0]->message->content,
+                'model' => $this->model,
+                'provider' => 'openai',
+                'usage' => [
+                    'prompt_tokens' => $response->usage->promptTokens,
+                    'completion_tokens' => $response->usage->completionTokens,
+                    'total_tokens' => $response->usage->totalTokens,
+                ],
+            ];
+        } catch (\Exception $e) {
+            Log::error('OpenAI error: ' . $e->getMessage());
 
-        return $body ?? ['error' => 'empty_response'];
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+                'provider' => 'openai',
+            ];
+        }
+    }
+
+    public function supportsProvider(string $provider): bool
+    {
+        return strtolower($provider) === 'openai';
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Application\Commands\RabbitMQConsume;
+use App\Application\Services\AIProcessingService;
 use App\Domain\Ports\Agent;
 use App\Domain\Ports\UserRegisteredPublisher;
 use App\Infrastructure\Agents\OpenAIAgent;
@@ -19,6 +20,10 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(RabbitMQPublisher::class, function ($app) {
             return new RabbitMQPublisher;
+        });
+
+        $this->app->singleton(AIProcessingService::class, function ($app) {
+            return new AIProcessingService();
         });
 
         $this->app->bind(

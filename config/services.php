@@ -13,6 +13,20 @@ return [
     | a conventional file to locate the various service credentials.
     |
     */
+    'ai' => [
+        'provider' => env('AI_PROVIDER', 'openai'),
+        'model' => env('AI_MODEL', 'gpt-4o-mini'),
+    ],
+
+    'openai' => [
+        'key' => env('OPENAI_API_KEY'),
+        'endpoint' => env('OPENAI_ENDPOINT', 'https://api.openai.com/v1'),
+    ],
+
+    'ollama' => [
+        'base_url' => env('OLLAMA_BASE_URL', 'http://ollama:11434'),
+        'model' => env('OLLAMA_MODEL', 'llama2'),
+    ],
 
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
