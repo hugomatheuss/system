@@ -23,7 +23,7 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 
-copilot-instructions
+.github/copilot-instructions
 pint.json
 phpstan.neon.dist
 
