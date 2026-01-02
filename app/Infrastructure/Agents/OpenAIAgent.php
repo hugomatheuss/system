@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 class OpenAIAgent implements Agent
 {
-    private Client $client;
+    private $client;
     private string $model;
 
     public function __construct(string $apiKey, string $model = 'gpt-4o-mini')

@@ -16,7 +16,7 @@ class AgentFactory
     {
         return match ($provider) {
             'openai' => new OpenAIAgent(
-                $config['api_key'] ?? config('services.openai.key'),
+                $config['api_key'] ?? config('services.openai.api_key'),
                 $config['model'] ?? config('services.ai.model', 'gpt-4o-mini')
             ),
             'ollama' => new OllamaAgent(
