@@ -19,7 +19,7 @@ return [
     ],
 
     'openai' => [
-        'key' => env('OPENAI_API_KEY'),
+        'api_key' => env('OPENAI_API_KEY'),
         'endpoint' => env('OPENAI_ENDPOINT', 'https://api.openai.com/v1'),
     ],
 
