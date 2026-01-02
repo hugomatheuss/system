@@ -38,6 +38,7 @@ RUN docker-php-ext-install -j"$(nproc)" \
         pdo_mysql \
         pdo_pgsql \
         pgsql \
+        sockets \
         zip \
         opcache \
         gd || true

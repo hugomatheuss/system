@@ -9,4 +9,6 @@ interface Agent
      * @return array<string,mixed>
      */
     public function analyze(string $content, array $metadata = []): array;
+
+    public function supportsProvider(string $provider): bool;
 }
